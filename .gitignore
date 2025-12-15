@@ -27,3 +27,6 @@ Thumbs.db
 # Temporales
 *.tmp
 *.temp
+
+#Claude
+CLAUDE.md
