@@ -1,0 +1,29 @@
+# Repositorios externos (se descargan con setup.sh)
+cont-portal/
+cont-guardias/
+cont-nginx/
+
+# Entorno
+.env
+
+# Logs
+logs/
+logs/nginx/
+
+# Docker
+.docker/
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporales
+*.tmp
+*.temp
