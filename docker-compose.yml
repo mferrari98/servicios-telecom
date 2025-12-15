@@ -5,6 +5,9 @@
 # ~/servicios-telecom/
 # ├── docker-compose.yml     # Orquestación de servicios
 # ├── cont-nginx/            # (repo) - Configuración de Nginx
+# │   ├── nginx.conf         # Configuración principal
+# │   ├── conf.d/            # Configuraciones de virtual hosts
+# │   └── ssl/               # Certificados SSL
 # ├── cont-portal/           # (repo) - Aplicación React
 # ├── cont-guardias/         # (repo) - Aplicación Flask
 # └── scripts/               # Scripts de gestión
@@ -17,8 +20,8 @@ services:
       - "${NGINX_HTTP_PORT:-80}:80"
       - "${NGINX_HTTPS_PORT:-443}:443"
     volumes:
-      - ./cont-nginx/nginx/conf.d:/etc/nginx/conf.d:ro                      # Configuraciones de servidores
-      - ./cont-nginx/nginx/ssl:/etc/nginx/ssl:ro                           # Certificados SSL (para futuro)
+      - ./cont-nginx/conf.d:/etc/nginx/conf.d:ro                      # Configuraciones de servidores
+      - ./cont-nginx/ssl:/etc/nginx/ssl:ro                           # Certificados SSL (para futuro)
       - ./cont-guardias/static:/usr/share/nginx/html/sistema-guardias-static:ro  # Archivos estáticos
       - ./logs/nginx:/var/log/nginx                                          # Logs de Nginx
     environment:

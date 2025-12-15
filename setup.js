@@ -73,21 +73,6 @@ function setupEnvFiles() {
     } else {
         console.log(colorText('yellow', '⚠️ Advertencia: No se encontró .env.example en cont-guardias'));
     }
-
-    // Configurar .env para servicios-telecom
-    const envPath = path.join(rootDir, '.env');
-    const envExamplePath = path.join(rootDir, '.env.example');
-
-    if (fs.existsSync(envExamplePath)) {
-        if (!fs.existsSync(envPath)) {
-            fs.copyFileSync(envExamplePath, envPath);
-            console.log(colorText('green', '✅ Archivo .env creado en servicios-telecom'));
-        } else {
-            console.log(colorText('green', '✅ El archivo .env ya existe en servicios-telecom'));
-        }
-    } else {
-        console.log(colorText('yellow', '⚠️ Advertencia: No se encontró .env.example en servicios-telecom'));
-    }
 }
 
 // Función para verificar el estado final
@@ -102,9 +87,6 @@ function showSummary() {
 
     const guardiasEnvExists = fs.existsSync(path.join(rootDir, 'cont-guardias', '.env'));
     console.log(`   - .env cont-guardias: ${guardiasEnvExists ? colorText('green', 'Configurado') : colorText('red', 'No configurado')}`);
-
-    const envExists = fs.existsSync(path.join(rootDir, '.env'));
-    console.log(`   - .env servicios-telecom: ${envExists ? colorText('green', 'Configurado') : colorText('red', 'No configurado')}`);
 }
 
 // Función principal
