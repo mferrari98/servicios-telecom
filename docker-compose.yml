@@ -37,6 +37,7 @@ services:
     build:
       context: ./cont-portal
       dockerfile: Dockerfile
+    image: servicios-telecom-portal
     container_name: cont-portal
     expose:
       - "80"
@@ -54,6 +55,7 @@ services:
     build:
       context: ./cont-guardias
       dockerfile: Dockerfile
+    image: servicios-telecom-guardias
     container_name: cont-guardias
     expose:
       - "5000"
