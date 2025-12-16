@@ -8,6 +8,7 @@ const { execSync } = require('child_process');
 const REPOS = [
     { name: 'cont-portal', url: 'https://github.com/mferrari98/cont-portal.git' },
     { name: 'cont-guardias', url: 'https://github.com/mferrari98/cont-guardias.git' },
+    { name: 'cont-empa', url: 'https://github.com/mferrari98/cont-empa.git' },
     { name: 'cont-nginx', url: 'https://github.com/mferrari98/cont-nginx.git' }
 ];
 
