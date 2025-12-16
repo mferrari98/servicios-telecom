@@ -10,7 +10,7 @@ servicios-telecom/
 ├── scripts/               # Scripts de gestión (Node.js)
 │   ├── package.json       # Dependencias de los scripts
 │   ├── setup.js          # Script de configuración inicial
-│   └── check-updates.js  # Verificador de actualizaciones
+│   └── actualizar.js  # Gestor de actualizaciones
 ├── cont-nginx/            # Configuración de Nginx
 ├── cont-portal/           # Aplicación React (Portal de Servicios)
 ├── cont-guardias/         # Aplicación Flask (Sistema de Guardias)
@@ -45,11 +45,10 @@ Este comando:
 docker-compose up --build -d
 ```
 
-### Verificar actualizaciones de los repositorios
+### Verificar y actualizar repositorios
 
 ```bash
-cd scripts
-npm run check-updates
+node actualizar.js
 ```
 
 ### Comandos útiles
@@ -87,8 +86,8 @@ docker-compose restart
 ### setup.js
 Configura el proyecto inicialmente clonando los repositorios necesarios y configurando las variables de entorno.
 
-### check-updates.js
-Verifica si hay actualizaciones disponibles en los repositorios y ofrece la opción de actualizarlos automáticamente.
+### actualizar.js
+Verifica el estado de todos los repositorios (incluyendo el principal), detecta cambios locales, actualizaciones disponibles y gestiona la actualización con stash automático de cambios locales.
 
 ## Variables de Entorno
 
