@@ -2,6 +2,10 @@
 cont-portal/
 cont-guardias/
 cont-nginx/
+cont-empa/
+cont-reportespiolis/
+cont-monitor/
+cont-dash/
 
 # Entorno
 .env
