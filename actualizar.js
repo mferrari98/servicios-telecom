@@ -148,32 +148,6 @@ function checkRepoStatus(repo, isMainRepo = false) {
     }
 }
 
-// Función para hacer stash si hay cambios locales
-function handleLocalChanges(repoPath) {
-    try {
-        const status = execSync('git status --porcelain',
-            { cwd: repoPath, encoding: 'utf8' }).trim();
-        if (status) {
-            console.log(colorText('yellow', '   📦 Haciendo stash de cambios locales...'));
-            execSync('git stash push -m "Auto-stash antes de actualizar"',
-                { cwd: repoPath, stdio: 'inherit' });
-            return true;
-        }
-    } catch (error) {
-        // Ignorar errores de stash
-    }
-    return false;
-}
-
-// Función para restaurar cambios del stash
-function restoreStash(repoPath) {
-    try {
-        execSync('git stash pop', { cwd: repoPath, stdio: 'inherit' });
-        console.log(colorText('green', '   📦 Cambios locales restaurados'));
-    } catch (error) {
-        console.log(colorText('yellow', '   ⚠️ No se pudieron restaurar los cambios del stash'));
-    }
-}
 
 // Función para preguntar al usuario
 function askQuestion(message) {
@@ -240,17 +214,16 @@ async function main() {
     const localChangeRepos = [];
 
     // Mostrar repositorio principal
-    console.log(`${colorText('cyan', '📁')} ${mainRepoResult.name}: ${mainRepoResult.message}`);
+    const localChangesText = mainRepoResult.hasLocalChanges ? ` ${colorText('yellow', '⚠️ Hay cambios locales')}` : '';
+    console.log(`${colorText('cyan', '📁')} ${mainRepoResult.name}: ${mainRepoResult.message}${localChangesText}`);
     if (mainRepoResult.hasLocalChanges) {
-        console.log(`   ${colorText('yellow', '⚠️ Hay cambios locales no confirmados')}`);
         localChangeRepos.push(mainRepoResult.name);
     }
-    if (mainRepoResult.needsUpdate && !mainRepoResult.hasLocalChanges) {
+    if (mainRepoResult.needsUpdate) {
         updateableRepos.push(mainRepoResult);
     }
     if (mainRepoResult.info) {
         console.log(`   Último commit: ${mainRepoResult.info.commit}`);
-        console.log(`   Rama actual: ${mainRepoResult.info.branch}`);
         if (mainRepoResult.needsUpdate && mainRepoResult.info.behind !== 'desconocido' && mainRepoResult.info.behind > 0) {
             console.log(`   Commits detrás: ${mainRepoResult.info.behind}`);
         }
@@ -259,20 +232,19 @@ async function main() {
 
     // Mostrar repositorios externos
     for (const result of results) {
-        console.log(`${colorText('magenta', '📦')} ${result.name}: ${result.message}`);
+        const localChangesText = result.hasLocalChanges ? ` ${colorText('yellow', '⚠️ Hay cambios locales')}` : '';
+        console.log(`${colorText('magenta', '📦')} ${result.name}: ${result.message}${localChangesText}`);
 
         if (result.hasLocalChanges) {
-            console.log(`   ${colorText('yellow', '⚠️ Hay cambios locales no confirmados')}`);
             localChangeRepos.push(result.name);
         }
 
-        if (result.needsUpdate && !result.hasLocalChanges) {
+        if (result.needsUpdate) {
             updateableRepos.push(result);
         }
 
         if (result.info) {
             console.log(`   Último commit: ${result.info.commit}`);
-            console.log(`   Rama actual: ${result.info.branch}`);
             if (result.needsUpdate && result.info.behind !== 'desconocido' && result.info.behind > 0) {
                 console.log(`   Commits detrás: ${result.info.behind}`);
             }
@@ -280,13 +252,7 @@ async function main() {
         console.log();
     }
 
-    // Si hay repositorios con cambios locales
-    if (localChangeRepos.length > 0) {
-        console.log(colorText('yellow', `⚠️ Hay repositorios con cambios locales no confirmados:`));
-        localChangeRepos.forEach(repo => console.log(`   - ${repo}`));
-        console.log(colorText('cyan', '💡 Se hará stash automático de estos cambios antes de actualizar\n'));
-    }
-
+    
     // Si hay actualizaciones disponibles
     if (updateableRepos.length > 0) {
         console.log(colorText('yellow', `🔄 Hay actualizaciones disponibles para:`));
