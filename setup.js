@@ -10,6 +10,7 @@ const REPOS = [
     { name: 'cont-guardias', url: 'https://github.com/mferrari98/cont-guardias.git' },
     { name: 'cont-empa', url: 'https://github.com/mferrari98/cont-empa.git' },
     { name: 'cont-reportespiolis', url: 'https://github.com/mferrari98/cont-reportespiolis.git' },
+    { name: 'cont-monitor-recursos', url: 'https://github.com/mferrari98/cont-monitor-recursos.git' },
     { name: 'cont-nginx', url: 'https://github.com/mferrari98/cont-nginx.git' }
 ];
 
