@@ -7,10 +7,8 @@ Proyecto de orquestación de servicios de telecomunicaciones usando Docker Compo
 ```
 servicios-telecom/
 ├── docker-compose.yml     # Orquestación de servicios
-├── scripts/               # Scripts de gestión (Node.js)
-│   ├── package.json       # Dependencias de los scripts
-│   ├── setup.js          # Script de configuración inicial
-│   └── actualizar.js  # Gestor de actualizaciones
+├── setup.js               # Script de configuración inicial
+├── actualizar.js          # Gestor de actualizaciones
 ├── cont-nginx/            # Configuración de Nginx
 ├── cont-portal/           # Aplicación React (Portal de Servicios)
 ├── cont-guardias/         # Aplicación Flask (Sistema de Guardias)
@@ -19,17 +17,10 @@ servicios-telecom/
 
 ## Configuración Inicial
 
-### 1. Instalar dependencias de los scripts
+### 1. Configurar el proyecto
 
 ```bash
-cd scripts
-npm install
-```
-
-### 2. Configurar el proyecto
-
-```bash
-npm run setup
+node setup.js
 ```
 
 Este comando:

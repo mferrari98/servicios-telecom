@@ -34,6 +34,11 @@ services:
       - EMPA_HOST=${EMPA_HOST:-cont-empa}  # Host del contenedor EMPA
       - EMPA_PORT=${EMPA_PORT:-80}  # Puerto del contenedor EMPA
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - proyectos_network
 
@@ -46,10 +51,15 @@ services:
     expose:
       - "80"
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - proyectos_network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:80/health.html"]
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:80/health.html >/dev/null 2>&1 || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -66,10 +76,15 @@ services:
     env_file:
       - ./cont-guardias/.env  # Cargar variables de entorno desde la carpeta del proyecto
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - proyectos_network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:5000/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -84,10 +99,15 @@ services:
     expose:
       - "80"
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - proyectos_network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:80/"]
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:80/ || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -106,10 +126,15 @@ services:
     env_file:
       - ./cont-reportespiolis/.env  # Usar el archivo .env existente en cont-reportespiolis
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - proyectos_network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/"]
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:3000/ || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -124,10 +149,15 @@ services:
     expose:
       - "80"
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - proyectos_network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:80/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3

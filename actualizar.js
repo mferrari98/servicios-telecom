@@ -31,6 +31,69 @@ function colorText(color, text) {
     return colors[color] + text + colors.reset;
 }
 
+function getDefaultRemoteRef(repoPath, remote = 'origin') {
+    try {
+        const headRef = execSync(`git symbolic-ref refs/remotes/${remote}/HEAD`, { cwd: repoPath, encoding: 'utf8' }).trim();
+        const prefix = `refs/remotes/${remote}/`;
+        if (headRef.startsWith(prefix)) {
+            return `${remote}/${headRef.slice(prefix.length)}`;
+        }
+    } catch {
+        // Ignore and fall back
+    }
+
+    return null;
+}
+
+function getUpstreamRef(repoPath) {
+    try {
+        return execSync('git rev-parse --abbrev-ref --symbolic-full-name @{u}', { cwd: repoPath, encoding: 'utf8' }).trim();
+    } catch {
+        const defaultRemoteRef = getDefaultRemoteRef(repoPath);
+        if (defaultRemoteRef) {
+            return defaultRemoteRef;
+        }
+
+        const fallbacks = ['origin/main', 'origin/master'];
+        for (const ref of fallbacks) {
+            try {
+                execSync(`git rev-parse --verify ${ref}`, { cwd: repoPath, stdio: 'ignore' });
+                return ref;
+            } catch {
+                // Ignore and continue to next fallback
+            }
+        }
+        return null;
+    }
+}
+
+function parseRemoteBranch(upstreamRef) {
+    if (!upstreamRef || !upstreamRef.includes('/')) {
+        return null;
+    }
+
+    const [remote, ...branchParts] = upstreamRef.split('/');
+    if (!remote || branchParts.length === 0) {
+        return null;
+    }
+
+    return { remote, branch: branchParts.join('/') };
+}
+
+function getAheadBehind(repoPath, upstreamRef) {
+    if (!upstreamRef) {
+        return null;
+    }
+
+    try {
+        const counts = execSync(`git rev-list --left-right --count ${upstreamRef}...HEAD`, { cwd: repoPath, encoding: 'utf8' }).trim();
+        const [behind, ahead] = counts.split(/\s+/).map(num => parseInt(num, 10) || 0);
+        return { ahead, behind };
+    } catch {
+        return null;
+    }
+}
+
 // Función para verificar el estado de un repositorio
 function checkRepoStatus(repo, isMainRepo = false) {
     const repoPath = isMainRepo ? rootDir : path.join(rootDir, repo.name);
@@ -68,6 +131,9 @@ function checkRepoStatus(repo, isMainRepo = false) {
             // Ignorar errores en git status
         }
 
+        const upstreamRef = getUpstreamRef(repoPath);
+        const trackingInfo = parseRemoteBranch(upstreamRef);
+
         // Obtener información del repo
         const currentBranch = execSync('git rev-parse --abbrev-ref HEAD',
             { cwd: repoPath, encoding: 'utf8' }).trim();
@@ -75,24 +141,28 @@ function checkRepoStatus(repo, isMainRepo = false) {
             { cwd: repoPath, encoding: 'utf8' }).trim();
 
         // Fetch para obtener info del remoto
-        try {
-            execSync('git fetch origin', { cwd: repoPath, stdio: 'ignore' });
-        } catch (error) {
-            // Ignorar errores de fetch
+        let fetchError = null;
+        if (trackingInfo) {
+            try {
+                execSync(`git fetch ${trackingInfo.remote} ${trackingInfo.branch}`, { cwd: repoPath, stdio: 'ignore' });
+            } catch (error) {
+                fetchError = error;
+            }
+        } else {
+            fetchError = new Error('Sin upstream configurado');
         }
 
-        let remoteCommit;
-        try {
-            remoteCommit = execSync('git rev-parse origin/main',
-                { cwd: repoPath, encoding: 'utf8' }).trim();
-        } catch {
+        let remoteCommit = null;
+        if (upstreamRef && !fetchError) {
             try {
-                remoteCommit = execSync('git rev-parse origin/master',
+                remoteCommit = execSync(`git rev-parse ${upstreamRef}`,
                     { cwd: repoPath, encoding: 'utf8' }).trim();
             } catch {
                 remoteCommit = null;
             }
         }
+
+        const aheadBehind = getAheadBehind(repoPath, upstreamRef);
 
         // Obtener info del último commit
         let commitInfo = 'Sin info';
@@ -107,21 +177,22 @@ function checkRepoStatus(repo, isMainRepo = false) {
         // Determinar si necesita actualización
         let needsUpdate = false;
         let status = '';
-        let behindCommits = 0;
+        let behindCommits = aheadBehind?.behind ?? 0;
+        let aheadCommits = aheadBehind?.ahead ?? 0;
 
-        if (remoteCommit && localCommit !== remoteCommit) {
+        if (aheadBehind && aheadBehind.ahead > 0 && aheadBehind.behind > 0) {
+            needsUpdate = true;
+            status = colorText('magenta', '⚠️ Rama divergente (merge requerido)');
+        } else if (aheadBehind && aheadBehind.behind > 0) {
             needsUpdate = true;
             status = colorText('yellow', '🔄 Actualización disponible');
-            try {
-                behindCommits = parseInt(execSync(`git rev-list --count HEAD..origin/main`,
-                    { cwd: repoPath, encoding: 'utf8' }).trim()) ||
-                                 parseInt(execSync(`git rev-list --count HEAD..origin/master`,
-                    { cwd: repoPath, encoding: 'utf8' }).trim()) || 0;
-            } catch {
-                behindCommits = 'desconocido';
-            }
+        } else if (aheadBehind && aheadBehind.ahead > 0) {
+            status = colorText('yellow', '⬆️ Commits locales pendientes de push');
         } else if (remoteCommit) {
             status = colorText('green', '✅ Actualizado');
+        } else if (fetchError) {
+            const level = fetchError.message && fetchError.message.includes('Sin upstream') ? 'yellow' : 'red';
+            status = colorText(level, `⚠️ ${fetchError.message || fetchError}`);
         } else {
             status = colorText('red', '❌ Error obteniendo estado');
         }
@@ -135,7 +206,9 @@ function checkRepoStatus(repo, isMainRepo = false) {
             info: {
                 commit: commitInfo,
                 branch: currentBranch,
-                behind: behindCommits
+                behind: behindCommits,
+                ahead: aheadCommits,
+                upstream: upstreamRef || 'sin-upstream'
             }
         };
     } catch (error) {
@@ -166,6 +239,44 @@ function askQuestion(message) {
     });
 }
 
+// Manejo de cambios locales (stash) antes de actualizar
+function handleLocalChanges(repoPath) {
+    try {
+        const status = execSync('git status --porcelain', { cwd: repoPath, encoding: 'utf8' }).trim();
+        if (!status) return null;
+
+        const before = execSync('git stash list', { cwd: repoPath, encoding: 'utf8' }).trim().split('\n').filter(Boolean);
+        const repoName = path.basename(repoPath).replace(/[^a-z0-9_-]/gi, '');
+        const stashMessage = `auto-stash(servicios-telecom):${repoName}:${new Date().toISOString()}`;
+
+        // Include untracked files to avoid pull failures
+        execSync(`git stash push -u -m "${stashMessage}"`, { cwd: repoPath, stdio: 'ignore' });
+
+        const after = execSync('git stash list', { cwd: repoPath, encoding: 'utf8' }).trim().split('\n').filter(Boolean);
+        const created = after.find(line => !before.includes(line) && line.includes(stashMessage));
+
+        if (created) {
+            return created.split(':')[0]; // e.g. stash@{0}
+        }
+
+        // Fallback: best-effort pop latest stash
+        return 'stash@{0}';
+    } catch {
+        return null;
+    }
+}
+
+function restoreStash(repoPath, stashRef) {
+    if (!stashRef) return;
+
+    try {
+        execSync(`git stash pop ${stashRef}`, { cwd: repoPath, stdio: 'inherit' });
+    } catch (error) {
+        console.error(colorText('yellow', `   ⚠️ No se pudo aplicar el stash (${stashRef}). Puede haber conflictos.`));
+        console.error(colorText('yellow', `   💡 Revisa con: git stash list && git stash show -p ${stashRef}`));
+    }
+}
+
 // Función para actualizar un repositorio
 async function updateRepo(repo, isMainRepo = false) {
     const repoPath = isMainRepo ? rootDir : path.join(rootDir, repo.name);
@@ -174,23 +285,40 @@ async function updateRepo(repo, isMainRepo = false) {
         console.log(colorText('blue', `Actualizando ${isMainRepo ? 'servicios-telecom' : repo.name}...`));
 
         // Hacer stash si hay cambios locales
-        const hadStash = handleLocalChanges(repoPath);
+        const stashRef = handleLocalChanges(repoPath);
+
+        const upstreamRef = getUpstreamRef(repoPath);
+        if (!upstreamRef) {
+            throw new Error('No se detectó upstream ni rama remota por defecto');
+        }
+
+        const remoteInfo = parseRemoteBranch(upstreamRef);
+        if (!remoteInfo) {
+            throw new Error(`No se pudo interpretar upstream (${upstreamRef})`);
+        }
+
+        const fallbackRemote = remoteInfo.remote;
+        const fallbackBranch = remoteInfo.branch;
+        console.log(colorText('blue', `   Usando ${fallbackRemote}/${fallbackBranch}`));
+
+        try {
+            execSync(`git fetch ${fallbackRemote} ${fallbackBranch}`, { cwd: repoPath, stdio: 'inherit' });
+        } catch (error) {
+            throw new Error(`No se pudo hacer fetch de ${fallbackRemote}/${fallbackBranch}: ${error.message}`);
+        }
 
         // Actualizar
         try {
-            execSync('git pull origin main', { cwd: repoPath, stdio: 'inherit' });
-        } catch {
-            try {
-                execSync('git pull origin master', { cwd: repoPath, stdio: 'inherit' });
-            } catch (error) {
-                throw error;
-            }
+            execSync(`git pull ${fallbackRemote} ${fallbackBranch}`, { cwd: repoPath, stdio: 'inherit' });
+        } catch (error) {
+            throw new Error(`No se pudo hacer pull de ${fallbackRemote}/${fallbackBranch}: ${error.message}`);
         }
 
         // Restaurar stash si había
-        if (hadStash) {
-            restoreStash(repoPath);
+        if (stashRef) {
+            restoreStash(repoPath, stashRef);
         }
+
 
         console.log(colorText('green', `   ✅ ${isMainRepo ? 'servicios-telecom' : repo.name} actualizado`));
         return true;
@@ -225,8 +353,11 @@ async function main() {
     }
     if (mainRepoResult.info) {
         console.log(`   Último commit: ${mainRepoResult.info.commit}`);
-        if (mainRepoResult.needsUpdate && mainRepoResult.info.behind !== 'desconocido' && mainRepoResult.info.behind > 0) {
+        if (mainRepoResult.needsUpdate && mainRepoResult.info.behind > 0) {
             console.log(`   Commits detrás: ${mainRepoResult.info.behind}`);
+        }
+        if (mainRepoResult.info.ahead > 0) {
+            console.log(`   Commits delante: ${mainRepoResult.info.ahead}`);
         }
     }
     console.log();
@@ -246,8 +377,11 @@ async function main() {
 
         if (result.info) {
             console.log(`   Último commit: ${result.info.commit}`);
-            if (result.needsUpdate && result.info.behind !== 'desconocido' && result.info.behind > 0) {
+            if (result.needsUpdate && result.info.behind > 0) {
                 console.log(`   Commits detrás: ${result.info.behind}`);
+            }
+            if (result.info.ahead > 0) {
+                console.log(`   Commits delante: ${result.info.ahead}`);
             }
         }
         console.log();
