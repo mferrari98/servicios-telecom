@@ -26,7 +26,6 @@ services:
       - ./cont-nginx/.htpasswd:/etc/nginx/.htpasswd:ro                # Basic auth users
       - ./cont-nginx/ssl:/etc/nginx/ssl:ro                           # Certificados SSL (para futuro)
       - ./cont-guardias/static:/usr/share/nginx/html/sistema-guardias-static:ro  # Archivos estáticos
-      - ./logs/nginx:/var/log/nginx                                          # Logs de Nginx
     environment:
       - FLASK_HOST=${FLASK_HOST:-cont-guardias}  # Host del contenedor Flask
       - FLASK_PORT=${FLASK_PORT:-5000}  # Puerto del contenedor Flask
@@ -170,6 +169,3 @@ services:
 networks:
   proyectos_network:
     driver: bridge
-
-volumes:
-  nginx_logs:
