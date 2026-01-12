@@ -123,6 +123,9 @@ services:
       - "3000"
     volumes:
       - /mnt/compartido:/mnt/compartido:ro  # Montar directorio compartido como solo lectura
+      - ./cont-reportespiolis/data:/app/data  # Base de datos SQLite persistente
+    environment:
+      - DB_PATH=/app/data/database.sqlite
     env_file:
       - ./cont-reportespiolis/.env  # Usar el archivo .env existente en cont-reportespiolis
     restart: unless-stopped
