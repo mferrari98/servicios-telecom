@@ -3,6 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
+const readline = require('readline');
 
 // Configuración
 const REPOS = [
@@ -27,6 +28,41 @@ const colors = {
 
 function colorText(color, text) {
     return colors[color] + text + colors.reset;
+}
+
+function promptInput(question) {
+    return new Promise(resolve => {
+        const rl = readline.createInterface({
+            input: process.stdin,
+            output: process.stdout,
+            terminal: true
+        });
+        rl.question(question, answer => {
+            rl.close();
+            resolve(answer.trim());
+        });
+    });
+}
+
+function promptHidden(question) {
+    return new Promise(resolve => {
+        const rl = readline.createInterface({
+            input: process.stdin,
+            output: process.stdout,
+            terminal: true
+        });
+        rl._writeToOutput = function(stringToWrite) {
+            if (!rl.stdoutMuted) {
+                rl.output.write(stringToWrite);
+            }
+        };
+        rl.question(question, answer => {
+            rl.close();
+            process.stdout.write('\n');
+            resolve(answer.trim());
+        });
+        rl.stdoutMuted = true;
+    });
 }
 
 // Función para verificar si estamos en el directorio correcto
@@ -78,6 +114,60 @@ function setupEnvFiles() {
     }
 }
 
+async function setupBasicAuth() {
+    if (!process.stdin.isTTY) {
+        console.log(colorText('yellow', '⚠️  No se detectó TTY; se omite configuración de Basic Auth.'));
+        return;
+    }
+
+    const nginxDir = path.join(rootDir, 'cont-nginx');
+    if (!fs.existsSync(nginxDir)) {
+        console.log(colorText('yellow', '⚠️  cont-nginx no existe; se omite configuración de Basic Auth.'));
+        return;
+    }
+
+    const htpasswdPath = path.join(nginxDir, 'htpasswd');
+    if (fs.existsSync(htpasswdPath)) {
+        const overwrite = await promptInput('⚠️  Ya existe cont-nginx/htpasswd. ¿Sobrescribir? (s/N): ');
+        if (!/^s/i.test(overwrite)) {
+            console.log(colorText('yellow', '↪ Se mantiene el archivo htpasswd existente.'));
+            return;
+        }
+    }
+
+    const username = await promptInput('Usuario para Basic Auth de Nginx: ');
+    if (!username) {
+        console.log(colorText('yellow', '⚠️  Usuario vacío; se omite configuración de Basic Auth.'));
+        return;
+    }
+
+    const password = await promptHidden('Clave para Basic Auth: ');
+    if (!password) {
+        console.log(colorText('yellow', '⚠️  Clave vacía; se omite configuración de Basic Auth.'));
+        return;
+    }
+
+    const confirm = await promptHidden('Confirmar clave: ');
+    if (password !== confirm) {
+        console.log(colorText('red', '❌ Las claves no coinciden; se omite configuración de Basic Auth.'));
+        return;
+    }
+
+    let hash;
+    try {
+        hash = execSync('openssl passwd -apr1 -stdin', {
+            input: password,
+            stdio: ['pipe', 'pipe', 'ignore']
+        }).toString().trim();
+    } catch (error) {
+        console.error(colorText('red', '❌ Error generando hash con openssl. ¿Está instalado?'));
+        return;
+    }
+
+    fs.writeFileSync(htpasswdPath, `${username}:${hash}\n`, { mode: 0o640 });
+    console.log(colorText('green', '✅ Archivo htpasswd creado en cont-nginx/htpasswd'));
+}
+
 // Función para verificar el estado final
 function showSummary() {
     console.log('\n📝 Resumen:');
@@ -90,10 +180,13 @@ function showSummary() {
 
     const guardiasEnvExists = fs.existsSync(path.join(rootDir, 'cont-guardias', '.env'));
     console.log(`   - .env cont-guardias: ${guardiasEnvExists ? colorText('green', 'Configurado') : colorText('red', 'No configurado')}`);
+
+    const htpasswdExists = fs.existsSync(path.join(rootDir, 'cont-nginx', 'htpasswd'));
+    console.log(`   - htpasswd Nginx: ${htpasswdExists ? colorText('green', 'Configurado') : colorText('red', 'No configurado')}`);
 }
 
 // Función principal
-function main() {
+async function main() {
     console.log(colorText('blue', '🚀 Configurando servicios-telecom...'));
 
     // Verificar directorio
@@ -105,6 +198,9 @@ function main() {
 
     // Configurar archivos .env
     setupEnvFiles();
+
+    // Configurar Basic Auth de Nginx
+    await setupBasicAuth();
 
     // Mostrar resumen
     showSummary();
@@ -123,5 +219,8 @@ function main() {
 
 // Ejecutar
 if (require.main === module) {
-    main();
+    main().catch(error => {
+        console.error(colorText('red', `❌ Error: ${error.message}`));
+        process.exit(1);
+    });
 }

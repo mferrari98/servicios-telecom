@@ -23,7 +23,7 @@ services:
       - "${NGINX_HTTPS_PORT:-443}:443"
     volumes:
       - ./cont-nginx/conf.d:/etc/nginx/conf.d:ro                      # Configuraciones de servidores
-      - ./cont-nginx/.htpasswd:/etc/nginx/.htpasswd:ro                # Basic auth users
+      - ./cont-nginx/htpasswd:/etc/nginx/htpasswd:ro                  # Basic auth users
       - ./cont-nginx/ssl:/etc/nginx/ssl:ro                           # Certificados SSL (para futuro)
       - ./cont-guardias/static:/usr/share/nginx/html/sistema-guardias-static:ro  # Archivos estáticos
     environment:
