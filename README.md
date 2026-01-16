@@ -1,92 +1,37 @@
 # Servicios Telecom
 
-Proyecto de orquestación de servicios de telecomunicaciones usando Docker Compose.
+Orquestador de servicios de telecomunicaciones con Docker Compose.
 
-## Estructura del Proyecto
+## Requisitos
+- Docker + Docker Compose
+- Node.js (para `setup.js` y `actualizar.js`)
 
-```
-servicios-telecom/
-├── docker-compose.yml     # Orquestación de servicios
-├── setup.js               # Script de configuración inicial
-├── actualizar.js          # Gestor de actualizaciones
-├── cont-nginx/            # Configuración de Nginx
-├── cont-portal/           # Aplicación React (Portal de Servicios)
-├── cont-guardias/         # Aplicación Flask (Sistema de Guardias)
-└── logs/                  # Logs de nginx
-```
-
-## Configuración Inicial
-
-### 1. Configurar el proyecto
-
+## Inicio rapido
 ```bash
 node setup.js
-```
-
-Este comando:
-- Clona los repositorios necesarios (cont-nginx, cont-portal, cont-guardias)
-- Configura los archivos .env requeridos
-- Muestra un resumen de la configuración
-
-## Uso
-
-### Iniciar los servicios
-
-```bash
 docker-compose up --build -d
 ```
 
-### Verificar y actualizar repositorios
-
-```bash
-node actualizar.js
-```
-
-### Comandos útiles
-
-```bash
-# Ver logs de todos los servicios
-docker-compose logs -f
-
-# Ver logs de un servicio específico
-docker-compose logs -f nginx
-
-# Ver estado de los contenedores
-docker-compose ps
-
-# Detener todos los servicios
-docker-compose down
-
-# Reiniciar los servicios
-docker-compose restart
-```
-
-## Contenedores
-
-- **cont-nginx**: Servidor Nginx como proxy reverso (puertos 80, 443)
-- **cont-portal**: Portal de servicios React (puerto interno 80)
-- **cont-guardias**: Sistema de guardias Flask (puerto interno 5000)
-
-## Acceso a los Servicios
-
-- **Portal de Servicios**: http://localhost
-- **Sistema de Guardias**: http://localhost/guardias
+## Servicios y rutas
+- Portal: `/`
+- Guardias: `/guardias/`
+- EMPA (pedidos): `/pedidos/`
+- Reportes: `/reporte/`
+- Monitor: `/monitor/`
 
 ## Scripts
+- `node setup.js`: clona repos y crea `.env`.
+- `node actualizar.js`: verifica y actualiza repos.
 
-### setup.js
-Configura el proyecto inicialmente clonando los repositorios necesarios y configurando las variables de entorno.
+## Configuracion
+- `.env` en la raiz (puertos/hosts de servicios).
+- `cont-guardias/.env` (ver `.env.example`).
+- `cont-reportespiolis/.env` (ver `example-env`).
+- `cont-monitor-recursos`: `MONITOR_API_TOKEN` y `ALLOWED_ORIGINS`.
 
-### actualizar.js
-Verifica el estado de todos los repositorios (incluyendo el principal), detecta cambios locales, actualizaciones disponibles y gestiona la actualización con stash automático de cambios locales.
-
-## Variables de Entorno
-
-El archivo `.env` se crea automáticamente al ejecutar `npm run setup`. Las variables principales son:
-
-- `NGINX_HTTP_PORT`: Puerto HTTP para Nginx (default: 80)
-- `NGINX_HTTPS_PORT`: Puerto HTTPS para Nginx (default: 443)
-- `FLASK_HOST`: Host del contenedor Flask (default: cont-guardias)
-- `FLASK_PORT`: Puerto del contenedor Flask (default: 5000)
-- `PORTAL_SERVICIOS_HOST`: Host del portal (default: cont-portal)
-- `PORTAL_SERVICIOS_PORT`: Puerto del portal (default: 80)
+## Logs
+- Consola: `docker-compose logs -f`
+- Archivos persistentes:
+  - `logs/nginx/access.log`
+  - `logs/nginx/error.log`
+  - `logs/reportespiolis/app.log`

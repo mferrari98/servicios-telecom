@@ -16,16 +16,16 @@
 
 services:
   nginx:
-    image: nginx:alpine
+    build:
+      context: ./cont-nginx
+    image: servicios-telecom-nginx
     container_name: cont-nginx
     ports:
       - "${NGINX_HTTP_PORT:-80}:80"
       - "${NGINX_HTTPS_PORT:-443}:443"
     volumes:
-      - ./cont-nginx/conf.d:/etc/nginx/conf.d:ro                      # Configuraciones de servidores
       - ./cont-nginx/htpasswd:/etc/nginx/htpasswd:ro                  # Basic auth users
-      - ./cont-nginx/ssl:/etc/nginx/ssl:ro                           # Certificados SSL (para futuro)
-      - ./cont-guardias/static:/usr/share/nginx/html/sistema-guardias-static:ro  # Archivos estáticos
+      - ./logs/nginx:/var/log/nginx                                  # Logs persistentes (sin rotacion)
     environment:
       - FLASK_HOST=${FLASK_HOST:-cont-guardias}  # Host del contenedor Flask
       - FLASK_PORT=${FLASK_PORT:-5000}  # Puerto del contenedor Flask
@@ -54,8 +54,8 @@ services:
     logging:
       driver: "json-file"
       options:
-        max-size: "10m"
-        max-file: "3"
+        max-size: "1m"
+        max-file: "1"
     networks:
       - proyectos_network
     healthcheck:
@@ -79,8 +79,8 @@ services:
     logging:
       driver: "json-file"
       options:
-        max-size: "10m"
-        max-file: "3"
+        max-size: "1m"
+        max-file: "1"
     networks:
       - proyectos_network
     healthcheck:
@@ -102,8 +102,8 @@ services:
     logging:
       driver: "json-file"
       options:
-        max-size: "10m"
-        max-file: "3"
+        max-size: "1m"
+        max-file: "1"
     networks:
       - proyectos_network
     healthcheck:
@@ -124,10 +124,12 @@ services:
     volumes:
       - /mnt/compartido:/mnt/compartido:ro  # Montar directorio compartido como solo lectura
       - ./cont-reportespiolis/data:/app/data  # Base de datos SQLite persistente
+      - ./logs/reportespiolis:/logs/reportespiolis                   # Logs persistentes (sin rotacion)
     environment:
       - DB_PATH=/app/data/database.sqlite
     env_file:
       - ./cont-reportespiolis/.env  # Usar el archivo .env existente en cont-reportespiolis
+    command: ["sh", "-c", "npm start 2>&1 | tee -a /logs/reportespiolis/app.log"]
     restart: unless-stopped
     logging:
       driver: "json-file"
@@ -151,6 +153,9 @@ services:
     container_name: cont-monitor-recursos
     expose:
       - "80"
+    volumes:
+      - ./logs/nginx:/logs/nginx:ro
+      - ./logs/reportespiolis:/logs/reportespiolis:ro
     environment:
       - MONITOR_API_TOKEN=${MONITOR_API_TOKEN:-}
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-}
@@ -158,8 +163,8 @@ services:
     logging:
       driver: "json-file"
       options:
-        max-size: "10m"
-        max-file: "3"
+        max-size: "1m"
+        max-file: "1"
     networks:
       - proyectos_network
     healthcheck:
