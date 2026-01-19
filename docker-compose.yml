@@ -129,7 +129,7 @@ services:
       - DB_PATH=/app/data/database.sqlite
     env_file:
       - ./cont-reportespiolis/.env  # Usar el archivo .env existente en cont-reportespiolis
-    command: ["sh", "-c", "npm start 2>&1 | tee -a /logs/reportespiolis/app.log"]
+    command: ["sh", "-c", "npm start"]
     restart: unless-stopped
     logging:
       driver: "json-file"
