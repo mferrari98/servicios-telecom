@@ -32,6 +32,6 @@ docker-compose up --build -d
 ## Logs
 - Consola: `docker-compose logs -f`
 - Archivos persistentes:
-  - `logs/nginx/access.log`
-  - `logs/nginx/error.log`
-  - `logs/reportespiolis/app.log`
+  - `cont-nginx/logs/access.log`
+  - `cont-nginx/logs/error.log`
+  - `cont-reportespiolis/logs/app.log`

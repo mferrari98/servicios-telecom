@@ -25,7 +25,7 @@ services:
       - "${NGINX_HTTPS_PORT:-443}:443"
     volumes:
       - ./cont-nginx/htpasswd:/etc/nginx/htpasswd:ro                  # Basic auth users
-      - ./logs/nginx:/var/log/nginx                                  # Logs persistentes (sin rotacion)
+      - ./cont-nginx/logs:/var/log/nginx                             # Logs persistentes (sin rotacion)
     environment:
       - FLASK_HOST=${FLASK_HOST:-cont-guardias}  # Host del contenedor Flask
       - FLASK_PORT=${FLASK_PORT:-5000}  # Puerto del contenedor Flask
@@ -124,7 +124,7 @@ services:
     volumes:
       - /mnt/compartido:/mnt/compartido:ro  # Montar directorio compartido como solo lectura
       - ./cont-reportespiolis/data:/app/data  # Base de datos SQLite persistente
-      - ./logs/reportespiolis:/logs/reportespiolis                   # Logs persistentes (sin rotacion)
+      - ./cont-reportespiolis/logs:/app/logs                         # Logs persistentes (sin rotacion)
     environment:
       - DB_PATH=/app/data/database.sqlite
     env_file:
@@ -154,8 +154,8 @@ services:
     expose:
       - "80"
     volumes:
-      - ./logs/nginx:/logs/nginx:ro
-      - ./logs/reportespiolis:/logs/reportespiolis:ro
+      - ./cont-nginx/logs:/logs/nginx:ro
+      - ./cont-reportespiolis/logs:/logs/reportespiolis:ro
     environment:
       - MONITOR_API_TOKEN=${MONITOR_API_TOKEN:-}
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-}
