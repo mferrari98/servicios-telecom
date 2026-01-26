@@ -164,7 +164,8 @@ async function setupBasicAuth() {
         return;
     }
 
-    fs.writeFileSync(htpasswdPath, `${username}:${hash}\n`, { mode: 0o640 });
+    fs.writeFileSync(htpasswdPath, `${username}:${hash}\n`, { mode: 0o644 });
+    fs.chmodSync(htpasswdPath, 0o644);
     console.log(colorText('green', '✅ Archivo htpasswd creado en cont-nginx/htpasswd'));
 }
 
