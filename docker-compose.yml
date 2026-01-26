@@ -50,6 +50,10 @@ services:
     container_name: cont-portal
     expose:
       - "80"
+    volumes:
+      - ./cont-portal/data:/app/data
+    environment:
+      - DB_PATH=/app/data/deudores.sqlite
     restart: unless-stopped
     logging:
       driver: "json-file"
