@@ -3,6 +3,14 @@
 Registro de cambios por sesion de trabajo. Actualizar al cerrar cada sesion.
 
 ## 2026-02-03
+### cont-reportespiolis
+- Sunburst: redisenio con anillo total, agua/vacio y sitios, ajustes de etiquetas, opacidad y tipografias, y leyenda de colores.
+- Barras: color de textos normalizado, maximo operativo agregado y ajustes de espaciado/legibilidad en web y mail.
+- Mail: capturas y tamanos de imagen ajustados para barras y sunburst; leyenda de colores agregada en el correo.
+
+### cont-nginx
+- /reporte/ sin auth_basic; el resto del portal sigue protegido.
+
 ### cont-portal
 - Internos: parseo de Excel movido a servidor con cache y API /api/internos; el cliente consume la cache por defecto.
 - Internos: worker actualizado para parseo en background (fallback solo si se habilita).
