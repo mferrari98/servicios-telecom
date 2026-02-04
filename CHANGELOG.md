@@ -8,6 +8,11 @@ Registro de cambios por sesion de trabajo. Actualizar al cerrar cada sesion.
 - Barras: color de textos normalizado, maximo operativo agregado y ajustes de espaciado/legibilidad en web y mail.
 - Mail: capturas y tamanos de imagen ajustados para barras y sunburst; leyenda de colores agregada en el correo.
 
+## 2026-02-04
+### cont-reportespiolis
+- Barras: texto de nivel actual alineado arriba con margen interno; texto de maximo operativo sin opacidad heredada.
+- Sunburst: porcentajes de agua y vacio con 1 decimal y formato con coma en labels y tooltip.
+
 ### cont-nginx
 - /reporte/ sin auth_basic; el resto del portal sigue protegido.
 
