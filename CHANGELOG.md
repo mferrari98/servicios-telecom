@@ -23,3 +23,4 @@ Registro de cambios por sesion de trabajo. Actualizar al cerrar cada sesion.
 - Deudores: formato de fecha dd/mm/aa con calendario nativo y normalizacion a ISO al guardar.
 - Deudores: se removieron mensajes de edicion bloqueada y el desbloqueo abre dialogo en lugar de mostrar error.
 - Auth: /api deudores ahora devuelve 403 en clave incorrecta para evitar el login de Basic Auth.
+- Docker: ca-certificates agregado en builder y deps para npm ci con node-gyp.
