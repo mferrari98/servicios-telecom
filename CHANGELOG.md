@@ -24,3 +24,12 @@ Registro de cambios por sesion de trabajo. Actualizar al cerrar cada sesion.
 - Deudores: se removieron mensajes de edicion bloqueada y el desbloqueo abre dialogo en lugar de mostrar error.
 - Auth: /api deudores ahora devuelve 403 en clave incorrecta para evitar el login de Basic Auth.
 - Docker: ca-certificates agregado en builder y deps para npm ci con node-gyp.
+
+## 2026-02-20
+### cont-reportespiolis
+- Lineas historicas: doble click en una serie para aislarla ocultando el resto; doble click en la misma serie para volver a mostrar todas.
+- Lineas historicas: soporte de doble click en todo el trazo de la linea (no solo puntos) y doble click en el fondo para restaurar la vista completa.
+- UI reporte: ayuda textual agregada debajo de controles de rango para explicar el comportamiento de foco/restauracion.
+
+### cont-portal
+- Docker: se elimino npm_config_build_from_source=true en builder y deps para permitir npm ci con binarios precompilados y evitar fallos TLS de node-gyp/sqlite3 durante build.
